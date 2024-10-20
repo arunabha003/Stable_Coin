@@ -2,15 +2,14 @@
 
 pragma solidity ^0.8.19;
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {Test} from "forge-std/Test.sol";
-import {ERC20Mock} from "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-
-import {MockV3Aggregator} from "../../mocks/MockV3Aggregator.sol";
-import {DSCEngine, AggregatorV3Interface} from "../../../src/DSCEngine.sol";
-import {DecentralizedStableCoin} from "../../../src/DecentralizedStableCoin.sol";
-import {MockV3Aggregator} from "../../mocks/MockV3Aggregator.sol";
-import {console} from "forge-std/console.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { Test } from "forge-std/Test.sol";
+import { ERC20Mock } from "../../mocks/ERC20Mock.sol";
+import { MockV3Aggregator } from "../../mocks/MockV3Aggregator.sol";
+import { DSCEngine, AggregatorV3Interface } from "../../../src/DSCEngine.sol";
+import { DecentralizedStableCoin } from "../../../src/DecentralizedStableCoin.sol";
+import { MockV3Aggregator } from "../../mocks/MockV3Aggregator.sol";
+import { console } from "forge-std/console.sol";
 
 contract StopOnRevertHandler is Test {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -60,9 +59,11 @@ contract StopOnRevertHandler is Test {
         uint256 maxCollateral = dscEngine.getCollateralBalanceOfUser(msg.sender, address(collateral));
 
         amountCollateral = bound(amountCollateral, 0, maxCollateral);
+        //vm.prank(msg.sender);
         if (amountCollateral == 0) {
             return;
         }
+        vm.prank(msg.sender);
         dscEngine.redeemCollateral(address(collateral), amountCollateral);
     }
 
@@ -72,15 +73,12 @@ contract StopOnRevertHandler is Test {
         if (amountDsc == 0) {
             return;
         }
+        vm.startPrank(msg.sender);
+        dsc.approve(address(dscEngine), amountDsc);
         dscEngine.burnDsc(amountDsc);
+        vm.stopPrank();
     }
 
-    // Only the DSCEngine can mint DSC!
-    // function mintDsc(uint256 amountDsc) public {
-    //     amountDsc = bound(amountDsc, 0, MAX_DEPOSIT_SIZE);
-    //     vm.prank(dsc.owner());
-    //     dsc.mint(msg.sender, amountDsc);
-    // }
 
     function liquidate(uint256 collateralSeed, address userToBeLiquidated, uint256 debtToCover) public {
         uint256 minHealthFactor = dscEngine.getMinHealthFactor();
